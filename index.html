@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8" />
+    <title>Drag Uploader</title>
+    <link href="http:////current.bootstrapcdn.com/bootstrap-v204/css/bootstrap-combined.min.css" rel="stylesheet" media="screen" />
+    <style>
+    .container {margin-top:30px;}
+    .container p {}
+    #img {text-align:center;}
+    #box.loading {background:url(load.gif) no-repeat center center;}
+    </style>
+</head>
+<body>
+
+<div class="container">
+	<h1>Drag Uploader</h1>
+	<p>아래 회색 영역에 이미지파일을 떨구어 주세요!</p>
+	<div class="hero-unit" id="box">
+		
+	</div>
+	<div id="result">
+
+	<div>
+</div>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script>
+$(function(){
+
+	var box = $('#box');
+	
+
+
+	function resetBox(){
+		box.css("background-color",'#eee');
+	}
+	function dropBox(){
+		box.css("background-color",'#666');
+	}
+
+	//dnd 핸들러
+	function dragEnter(){
+		console.log("dragEnter");
+		return false;
+	}
+	function dragLeave(){
+		console.log("dragLeave");
+		resetBox();
+		return false;
+	}
+	function dragEnd(){
+		console.log("dragEnd");
+		return false;
+	}
+	function dragOver(){
+		console.log("dragOver");
+		dropBox();
+		return false;
+
+	}
+	function drag(){
+		console.log("drag");
+		return false;
+	}		
+	function drop(event){
+		console.log("drop");
+		resetBox();
+
+		var originalEvent = event.originalEvent;
+		var files = originalEvent.dataTransfer.files;
+		var length = files.length;
+
+		console.log(files)
+		//reader.readAsDataURL(file);
+
+		if(length > 0){
+
+			box.addClass('loading');
+			var reader = new FileReader();
+
+			//일단  첫번째 파일만 
+			reader.readAsDataURL(files[0]);
+
+			$(reader).on("loadend", function(event){
+
+				var imageData = event.target.result; //base64
+				uploadAPI(imageData);
+			});
+
+		}
+
+		return false;
+	}	
+	
+	//이벤트 등록
+	box.on("dragover", dragOver);
+	box.on("dragleave", dragLeave);
+	box.on("dragenter", dragEnter);
+	box.on("dragend", dragEnd);
+	box.on("drop", drop);
+	box.on("drag", drop);
+
+
+	//imgur.com 업로드 
+	function uploadAPI(imageData){
+
+		var image  = imageData.substr(imageData.indexOf(",")+1, imageData.length);
+		var result = $('#result');
+
+		console.log(image);
+		$.post(
+			'http://api.imgur.com/2/upload.json', 
+			{
+				key : '6fd4b3b888cd01b160e0f7ac68b2ecca', //악용금지;
+				type : 'base64',
+				image : image
+			}, 
+			function(data){
+
+				var upload = data.upload;
+				result.append('<p><a href="'+upload.links.imgur_page+'"  target="_blank" class="thumbnail"><img src="'+upload.links.large_thumbnail+'"><br>'+upload.links.imgur_page+'</a></p>');
+				
+				box.removeClass('loading');
+			}
+		);
+	}
+
+});
+
+
+</script>
+</body>
+</html>
+
